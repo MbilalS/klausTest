@@ -3,6 +3,7 @@
   margin: auto;
   background-color: #FFFFFF;
   border-radius: 8px;
+  min-height: 100vh;
 
   .selected-actions {
     display: flex;
@@ -11,12 +12,13 @@
     padding-bottom: 25px;
 
     .selected-users {
-      margin-left: 62px;
       margin-right: 25px;
       color: #2D3748;
       font-size: 16px;
       font-weight: 500;
       line-height: 24px;
+      position: relative;
+      width: 127px;
     }
 
     .header-delete-button {
@@ -39,18 +41,16 @@
 
     .checkbox-column {
       position: relative;
-      left: 51px;
+      left: -23px;
       display: block;
       text-align: start;
     }
 
     .roles-column {
       position: relative;
-      // display: flex;
-      // justify-content: flex-start;
-      left: 45px;
+      left: 55px;
       display: -webkit-inline-box;
-      margin-top: -15px;
+      margin-top: -3px;
 
       img {
         margin-left: 7px;
@@ -174,8 +174,8 @@
   }
 
   .pagination {
-    margin-top: 30px;
     margin-bottom: 30px;
+    padding: 50px;
 
     button {
       color: #FFFFFF;
@@ -186,6 +186,14 @@
       white-space: nowrap;
       border: none;
       border-radius: 4px;
+      margin-right: 7px;
+      cursor: pointer;
+
+      &:disabled {
+        background-color: #bcbdbe;
+        color: #FFFFFF;
+        cursor: default;
+      }
     }
   }
 }

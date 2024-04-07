@@ -1,9 +1,9 @@
 import { Grid, ListItemText } from '@mui/material';
 import { UsersList } from 'components/usersList/UsersList';
 import { CommonButton } from '../../components/buttons/CommonButton';
-import './Home.scss';
 import { useState } from 'react';
 import { useDebounce } from 'use-debounce';
+import './Home.scss';
 
 export const Home = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');

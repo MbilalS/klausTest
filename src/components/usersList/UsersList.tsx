@@ -31,22 +31,21 @@ export const UsersList = ({ searchQuery }: UserListProps) => {
   const [startRowNumber, setStartRowNumber] = useState(START_ROW_NUMBER);
   const [endRowNumber, setEndRowNumber] = useState(END_ROW_NUMBER);
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
-
-  // Simulated user data
+  const [loader, setLoader] = useState<boolean>(false);
+  const [hasNoData, setHasNoData] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(25);
 
-  // Handle pagination
-  const indexOfLastUser = currentPage * usersPerPage;
-  const indexOfFirstUser = indexOfLastUser - usersPerPage;
-
   useEffect(() => {
     const getUsersList = async () => {
+      setLoader(true);
+
       const usersList: UserType[] = await userService.getUsersList();
 
       setUsersData(usersList.slice(startRowNumber, endRowNumber));
 
       setUsersFullList(usersList);
+      setLoader(false);
     }
 
     getUsersList();
@@ -60,35 +59,20 @@ export const UsersList = ({ searchQuery }: UserListProps) => {
     return usersFullList?.filter((value) => value.name.toLowerCase().includes(searchQuery.toLowerCase()));    
   }, [searchQuery, usersFullList]);
 
-  console.log(searchResult, 'searchResult');
-
   useEffect(() => {
     if (searchResult.length > 0) {
       setUsersData(searchResult.slice(startRowNumber, endRowNumber));
+      setHasNoData(false);
     } else {
       setUsersData([]);
+      setHasNoData(true);
     }
   }, [endRowNumber, searchResult, startRowNumber]);
 
-  // Get users list
-  // const getUsersData = async () => {
-  //   try {
-      
-  //     const listSize = searchResult?.length;
-
-  //     setUsersData(searchResult.slice(startRowNumber, endRowNumber));
-
-  //     if (listSize >= startRowNumber) {
-  //       setStartRowNumber(startRowNumber + END_ROW_NUMBER);
-  //       setEndRowNumber(endRowNumber + END_ROW_NUMBER);
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //   }
-  // };
-
   // fetch next rows
   const fetchNextRows = async () => {
+    setLoader(true);
+
     try {
       const nextRows = searchResult.slice(startRowNumber, endRowNumber);
 
@@ -100,11 +84,11 @@ export const UsersList = ({ searchQuery }: UserListProps) => {
     } catch (err) {
       console.error(err);
     }
+
+    setLoader(false);
   };
 
   const fetchPreviousRows = async () => {
-    console.log('fetchPreviousRows called');
-    
     try {
       const previousRows = searchResult.slice(startRowNumber - END_ROW_NUMBER, endRowNumber - END_ROW_NUMBER);
 
@@ -124,7 +108,7 @@ export const UsersList = ({ searchQuery }: UserListProps) => {
   };
 
   const setPreviousPage = () => {
-    setStartRowNumber(END_ROW_NUMBER - startRowNumber);
+    setStartRowNumber(startRowNumber - END_ROW_NUMBER);
     setEndRowNumber(endRowNumber - END_ROW_NUMBER);
   };
 
@@ -142,7 +126,6 @@ export const UsersList = ({ searchQuery }: UserListProps) => {
 
   // Handle checkbox change
   const handleCheckboxChange = (userId: number, index: number) => {
-
     setSelectedUsers((prevSelectedUsers) => {
       if (prevSelectedUsers.includes(userId)) {
         return prevSelectedUsers.filter((id) => id !== userId);
@@ -169,36 +152,41 @@ export const UsersList = ({ searchQuery }: UserListProps) => {
   return (
     <div className='user-list'>
       {/* header */}
-      <Grid>
-        <div className='selected-actions'>
-          <div className='selected-users'>
-            {selectedUsers?.length} users selected
+      <Grid
+        container
+        spacing={2}
+        alignItems='center'
+      >
+        <Grid xs={1}></Grid>
+        <Grid xs={11}>
+          <div className='selected-actions'>
+            <div className='selected-users'>
+              {selectedUsers?.length} users selected
+            </div>
+            <CommonButton
+              variant='outlined'
+              size='small'
+              iconUrl='/icons/edit.svg'
+              label='Edit'
+            />
+            <CommonButton
+              variant='outlined'
+              size='small'
+              label='Delete'
+              iconUrl='/icons/trash.svg'
+              classes='header-delete-button'
+            />
           </div>
-          <CommonButton
-            variant='outlined'
-            size='small'
-            iconUrl='/icons/edit.svg'
-            label='Edit'
-          />
-          <CommonButton
-            variant='outlined'
-            size='small'
-            label='Delete'
-            iconUrl='/icons/trash.svg'
-            classes='header-delete-button'
-          />
-        </div>
+        </Grid>
       </Grid>
 
       {/* columns */}
       <Grid
         container
-        spacing={2}
-        justifyContent='start'
-        alignItems='center'
         className='columns'
       >
-        <Grid item xs={6} className='checkbox-column'>
+        <Grid xs={1}></Grid>
+        <Grid item xs={1} className='checkbox-column'>
           <Checkbox
             onChange={selectAllRows}
             sx={{
@@ -211,6 +199,8 @@ export const UsersList = ({ searchQuery }: UserListProps) => {
           <span className='title'>User</span>
         </Grid>
 
+        <Grid xs={4}></Grid>
+
         <Grid item xs={6} className='roles-column'>
           <span className='title'>Permission</span>
           <img src='/icons/arrow-down.svg'
@@ -220,82 +210,96 @@ export const UsersList = ({ searchQuery }: UserListProps) => {
       </Grid>
 
       {
-        usersData?.length === 0 && (
-          <p>no user</p>
-        ) 
+        loader && (
+          <span className='loader'></span>
+        )
       }
 
-      {usersData && usersData?.map((user, index) => {
-        return (
-        <Grid
-          container
-          spacing={2}
-          key={user.id}
-          justifyContent='center'
-          alignItems='center'
-          className='main-grid'
-          style={{
-            borderLeft: `4px solid ${selectedUsers.includes(user.id) ? 'blue' : 'transparent'}`
-          }}
-        >
-          {/* profile image */}
-          <Grid item xs={2} style={{display: 'contents'}}>
-            <Checkbox
-              checked={selectedUsers.includes(user.id)}
-              onChange={() => handleCheckboxChange(user.id, index)}
-              sx={{
-                color: '#CBD5E0',
-                '&.Mui-checked': {
-                  color: '#475DE5',
-                },
-              }}
-            />
-            <Avatar alt='profile-image' src={user.avatar} className='avatar' />
-          </Grid>
+      {
+        searchQuery && hasNoData && (
+          <span>User not found</span>
+        )
+      }
 
-          {/* user name and email */}
-          <Grid item xs={5}>
-            <ListItemText primary={user.name} className='name-text' />
-            <ListItemText primary={user.email} className='email-text' />
-          </Grid>
-
-          {/* user role */}
-          <Grid item xs={3}>
-            <ListItemText
-              primary={user.role?.replace('_', ' ')?.toLowerCase()}
-              className='role-text'
+      {
+        usersData?.map((user, index) => {
+          return (
+            <Grid
+              container
+              spacing={2}
+              key={user.id}
+              justifyContent='center'
+              alignItems='center'
+              className='main-grid'
               style={{
-                color: `${rolesTextColorMap[user.role]}`,
-                background: `${rolesBackgroundColorMap[user.role]}`
+                borderLeft: `4px solid ${selectedUsers.includes(user.id) ? '#475DE5' : 'transparent'}`,
+                borderRadius: `${selectedUsers.includes(user.id) ? '4px' : ''}`,
+                backgroundColor: `${selectedUsers.includes(user.id) ? '#F7FAFC' : ''}`
               }}
-            />
-          </Grid>
+            >
+              {/* profile image */}
+              <Grid item xs={2} style={{display: 'contents'}}>
+                <Checkbox
+                  checked={selectedUsers.includes(user.id)}
+                  onChange={() => handleCheckboxChange(user.id, index)}
+                  sx={{
+                    color: '#CBD5E0',
+                    '&.Mui-checked': {
+                      color: '#475DE5',
+                    },
+                  }}
+                />
+                <Avatar alt='profile-image' src={user.avatar} className='avatar' />
+              </Grid>
 
-          {/* Action buttons */}
-          <Grid item xs={2}>
-            <CommonButton
-              variant='outlined'
-              size='small'
-              iconUrl='/icons/edit.svg'
-              label='Edit'
-              classes='edit-button'
-            />
+              {/* user name and email */}
+              <Grid item xs={5}>
+                <ListItemText primary={user.name} className='name-text' />
+                <ListItemText primary={user.email} className='email-text' />
+              </Grid>
 
-            <CommonButton
-              variant='outlined'
-              size='small'
-              iconUrl='/icons/trash.svg'
-              classes='delete-button'
-            />
-          </Grid>
-        </Grid>
-        );
-      })}
+              {/* user role */}
+              <Grid item xs={3}>
+                <ListItemText
+                  primary={user.role?.replace('_', ' ')?.toLowerCase()}
+                  className='role-text'
+                  style={{
+                    color: `${rolesTextColorMap[user.role]}`,
+                    background: `${rolesBackgroundColorMap[user.role]}`
+                  }}
+                />
+              </Grid>
 
-      <div className='pagination'>
-        <button onClick={prevPage} disabled={currentPage === 1}>Previous</button>
-        <button onClick={nextPage} disabled={currentPage === Math.ceil(searchResult.length / usersPerPage)}>Next</button>
-      </div>
+              {/* Action buttons */}
+              <Grid item xs={2}>
+                <CommonButton
+                  variant='outlined'
+                  size='small'
+                  iconUrl='/icons/edit.svg'
+                  label='Edit'
+                  classes='edit-button'
+                />
+
+                <CommonButton
+                  variant='outlined'
+                  size='small'
+                  iconUrl='/icons/trash.svg'
+                  classes='delete-button'
+                />
+              </Grid>
+            </Grid>
+          );
+        })
+      }
+
+      {
+        usersData?.length > 0 && (
+          <div className='pagination'>
+            <button onClick={prevPage} disabled={currentPage === 1}>Previous</button>
+            <button onClick={nextPage} disabled={currentPage === Math.ceil(searchResult.length / usersPerPage)}>Next</button>
+          </div>
+        )
+      }
     </div>
   );
 };

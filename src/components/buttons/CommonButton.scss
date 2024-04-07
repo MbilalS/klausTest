@@ -1,0 +1,22 @@
+.common-button {
+  width: 70px;
+  height: 32px;
+  border: 1px solid #E2E8F0 !important;
+  color: #4A5568 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  background-color: #FFFFFF !important;
+  border-radius: 4px !important;
+  text-transform: capitalize !important;
+
+  img {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    border: 1px solid #E2E8F0 !important;
+    background-color: #E2E8F0 !important;
+    transition: 0.3s;
+  }
+}
